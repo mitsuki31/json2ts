@@ -333,6 +333,22 @@ int main(int argc, char* argv[]) {
             use_dts = true;
         } else if (arg == "--ts") {
             use_ts = true;
+        } else if (arg == "--help") {
+            std::cout << "json2ts - Convert JSON to TypeScript .d.ts / .ts interface file\n"
+                      << "\n"
+                      << "Usage:\n"
+                      << "  json2ts <input.json> [--output <output>] [--name <InterfaceName>] [--dts | --ts]\n"
+                      << "\n"
+                      << "Options:"
+                      << "  --output <file>  Output filename (extension replaced/enforced)\n"
+                      << "  --name <Name>    Interface name (default: filename stem or single root key)\n"
+                      << "  --dts            Output file with '.d.ts' extension (default)\n"
+                      << "  --ts             Output file with '.ts' extension\n"
+                      << "  --help           Show this help message\n"
+                      << "\n"
+                      << "Note:\n"
+                      << "  Comments (// and /* */) in JSON are stripped and mapped to JSDoc best-effort.\n";
+            return 0;
         } else if (!arg.empty() && arg[0] == '-') {
             std::cerr << "Unknown option: " << arg << std::endl;
             return 1;
