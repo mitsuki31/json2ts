@@ -55,7 +55,8 @@ std::string strip_whitespace_around(const std::string& s) {
 }
 
 std::string preprocess_json(const std::string& raw,
-                            std::vector<ExtractedComment>& comments) {
+                            std::vector<ExtractedComment>& comments,
+                            bool no_comments = false) {
     std::string cleaned;
     size_t i = 0;
 
@@ -70,14 +71,14 @@ std::string preprocess_json(const std::string& raw,
             }
 
             std::string trimmed = strip_whitespace_around(comment_text);
-            comments.push_back({trimmed, ""});
-
-            // Try to associate with next quoted key
-            std::string rest = raw.substr(i);
-            std::regex key_regex("\"([^\"]+)\"");
-            std::smatch match;
-            if (std::regex_search(rest, match, key_regex)) {
-                comments.back().key = match[1];
+            if (!no_comments) {
+                comments.push_back({trimmed, ""});
+                std::string rest = raw.substr(i);
+                std::regex key_regex("\"([^\"]+)\"");
+                std::smatch match;
+                if (std::regex_search(rest, match, key_regex)) {
+                    comments.back().key = match[1];
+                }
             }
         } else if (i + 1 < raw.size() && raw[i] == '/' && raw[i + 1] == '*') {
             std::string comment_text;
@@ -94,13 +95,14 @@ std::string preprocess_json(const std::string& raw,
             }
 
             std::string trimmed = strip_whitespace_around(comment_text);
-            comments.push_back({trimmed, ""});
-
-            std::string rest = raw.substr(i);
-            std::regex key_regex("\"([^\"]+)\"");
-            std::smatch match;
-            if (std::regex_search(rest, match, key_regex)) {
-                comments.back().key = match[1];
+            if (!no_comments) {
+                comments.push_back({trimmed, ""});
+                std::string rest = raw.substr(i);
+                std::regex key_regex("\"([^\"]+)\"");
+                std::smatch match;
+                if (std::regex_search(rest, match, key_regex)) {
+                    comments.back().key = match[1];
+                }
             }
         } else {
             cleaned += raw[i];
@@ -317,6 +319,7 @@ int main(int argc, char* argv[]) {
     std::string output_file;
     std::string interface_name;
     bool interface_name_from_cli = false;
+    bool no_comments = false;
     bool use_dts = false;
     bool use_ts = false;
 
@@ -329,6 +332,8 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--name" && has_remain) {
             interface_name = argv[++i];
             interface_name_from_cli = true;
+        } else if (arg == "--no-comments") {
+            no_comments = true;
         } else if (arg == "--dts") {
             use_dts = true;
         } else if (arg == "--ts") {
@@ -344,6 +349,7 @@ int main(int argc, char* argv[]) {
                       << "  --name <Name>    Interface name (default: filename stem or single root key)\n"
                       << "  --dts            Output file with '.d.ts' extension (default)\n"
                       << "  --ts             Output file with '.ts' extension\n"
+                      << "  --no-comments    Exclude JSON comments from output (still stripped for parsing)\n"
                       << "  --help           Show this help message\n"
                       << "\n"
                       << "Note:\n"
@@ -386,26 +392,25 @@ int main(int argc, char* argv[]) {
                     std::istreambuf_iterator<char>());
 
     std::vector<ExtractedComment> comments;
-    std::string cleaned = preprocess_json(raw, comments);
+    std::string cleaned = preprocess_json(raw, comments, no_comments);
 
     // Build comments map (best effort association)
     std::map<std::string, std::vector<std::string>> comments_by_key;
-    for (const auto& c : comments) {
-        std::string key_for_lookup = c.key.empty()
-            ? sanitize_identifier(c.text)
-            : sanitize_identifier(c.key);
-        // Try to use the associated key directly if found; otherwise use sanitized text
-        std::string target_key = c.key.empty()
-            ? sanitize_identifier(c.text)
-            : c.key;
-        comments_by_key[target_key].push_back(c.text);
-    }
-    // Also map comments by their text as a fallback
-    for (const auto& c : comments) {
-        std::string text_key = sanitize_identifier(c.text);
-
-        if (comments_by_key.find(text_key) == comments_by_key.end()) {
-            comments_by_key[text_key].push_back(c.text);
+    if (!no_comments) {
+        for (const auto& c : comments) {
+            std::string key_for_lookup = c.key.empty()
+                ? sanitize_identifier(c.text)
+                : sanitize_identifier(c.key);
+            std::string target_key = c.key.empty()
+                ? sanitize_identifier(c.text)
+                : c.key;
+            comments_by_key[target_key].push_back(c.text);
+        }
+        for (const auto& c : comments) {
+            std::string text_key = sanitize_identifier(c.text);
+            if (comments_by_key.find(text_key) == comments_by_key.end()) {
+                comments_by_key[text_key].push_back(c.text);
+            }
         }
     }
 
@@ -447,20 +452,22 @@ int main(int argc, char* argv[]) {
 
     std::ostringstream out;
     // File-level JSDoc from all comments (best effort)
-    std::vector<std::string> file_comments;
-    for (const auto& c : comments) {
-        if (std::find(file_comments.begin(),
-                      file_comments.end(),
-                      c.text) == file_comments.end()) {
-            file_comments.push_back(c.text);
+    if (!no_comments) {
+        std::vector<std::string> file_comments;
+        for (const auto& c : comments) {
+            if (std::find(file_comments.begin(),
+                          file_comments.end(),
+                          c.text) == file_comments.end()) {
+                file_comments.push_back(c.text);
+            }
         }
-    }
-    if (!file_comments.empty()) {
-        out << "/**\n";
-        for (const auto& line : file_comments) {
-            out << " * " << line << "\n";
+        if (!file_comments.empty()) {
+            out << "/**\n";
+            for (const auto& line : file_comments) {
+                out << " * " << line << "\n";
+            }
+            out << " */\n";
         }
-        out << " */\n";
     }
 
     std::set<std::string> emitted;
