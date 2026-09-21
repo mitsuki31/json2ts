@@ -132,17 +132,6 @@ inline bool is_primitive(const json& j) noexcept {
         || j.is_array());
 }
 
-void collect_interfaces(const json& root,
-                        const std::string& base_name,
-                        std::vector<std::string>& interfaces,
-                        std::map<std::string,
-                        std::vector<std::string>>& comments_by_interface) {
-    // This will be called for nested objects; interfaces vector holds output lines like "export interface Name { ... }"
-    // We generate interfaces in a separate recursive pass to keep names stable.
-    // For simplicity, we'll do a single recursive generation that writes interfaces directly to a string stream,
-    // collecting all interface definitions.
-}
-
 std::string to_pascal_case(const std::string& s) {
     std::string out;
     bool capitalize = true;
@@ -233,19 +222,6 @@ void generate_interface(const std::string& interface_name,
         }
     }
     out << "}\n";
-}
-
-// Better recursive approach: generate all interfaces in a single pass
-void write_interfaces(const json& j,
-                      const std::string& name,
-                      std::ostringstream& out,
-                      std::map<std::string,
-                      std::vector<std::string>>& comments_by_key,
-                      std::map<std::string,
-                      std::string>& interface_content,
-                      std::vector<std::string>& interface_order) {
-    // interface_content[name] = content of interface
-    // We'll build them recursively
 }
 
 struct InterfaceDef {
