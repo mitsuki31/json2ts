@@ -110,7 +110,7 @@ std::string preprocess_json(const std::string& raw,
     return cleaned;
 }
 
-std::string ts_type_for(const json& j) noexcept {
+const std::string ts_type_for(const json& j) noexcept {
     if (j.is_string()) return "string";
     if (j.is_number_integer() || j.is_number_float()) return "number";
     if (j.is_boolean()) return "boolean";
@@ -132,7 +132,7 @@ inline bool is_primitive(const json& j) noexcept {
         || j.is_array());
 }
 
-std::string to_pascal_case(const std::string& s) {
+const std::string to_pascal_case(const std::string& s) {
     std::string out;
     bool capitalize = true;
 
@@ -317,6 +317,8 @@ int main(int argc, char* argv[]) {
     std::string output_file;
     std::string interface_name;
     bool interface_name_from_cli = false;
+    bool use_dts = false;
+    bool use_ts = false;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -327,6 +329,10 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--name" && has_remain) {
             interface_name = argv[++i];
             interface_name_from_cli = true;
+        } else if (arg == "--dts") {
+            use_dts = true;
+        } else if (arg == "--ts") {
+            use_ts = true;
         } else if (!arg.empty() && arg[0] == '-') {
             std::cerr << "Unknown option: " << arg << std::endl;
             return 1;
@@ -340,9 +346,17 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if (!use_dts && !use_ts) {
+        use_ts = true;  // default to use '.ts' extension
+    } else if (use_dts && use_ts) {
+        std::cerr << "Error: Cannot specify both --dts and --ts" << std::endl;
+        return 1;
+    }
+
     if (input_file.empty()) {
         std::cerr
-            << "Usage: json2ts <input.json> [--output <output.d.ts>] [--name <InterfaceName>]"
+            << "Usage: json2ts <input.json> "
+            << "[--output <output>] [--name <InterfaceName>] [--dts | --ts]"
             << std::endl;
         return 1;
     }
@@ -406,11 +420,10 @@ int main(int argc, char* argv[]) {
             interface_name = p.stem().string();
         }
     }
-    if (interface_name_from_cli) {
-        interface_name = sanitize_identifier(interface_name);
-    } else {
-        interface_name = sanitize_identifier(to_pascal_case(interface_name));
-    }
+
+    interface_name = sanitize_identifier(
+        interface_name_from_cli ? interface_name : to_pascal_case(interface_name)
+    );
     if (interface_name.empty() || interface_name == "_") interface_name = "Root";
 
     std::vector<InterfaceDef> defs;
@@ -442,27 +455,23 @@ int main(int argc, char* argv[]) {
     }
 
     std::string output_path;
+    std::string ext = use_ts ? ".ts" : ".d.ts";
     if (!output_file.empty()) {
         fs::path out_path(output_file);
         std::string filename_str = out_path.filename().string();
-        bool ends_with_dts = (
-            filename_str.size() >= 5
-            && filename_str.substr(filename_str.size() - 5) == ".d.ts"
-        );
-        bool ends_with_dots = filename_str.find('.') != std::string::npos;
-
-        if (!ends_with_dts && !ends_with_dots) {
-            out_path.replace_extension(".d.ts");
-        } else if (ends_with_dots && !ends_with_dts) {
-            out_path.replace_extension(".d.ts");
+        bool has_ext = filename_str.find('.') != std::string::npos;
+        bool ends_with_chosen = filename_str.size() >= ext.size()
+            && filename_str.substr(filename_str.size() - ext.size()) == ext;
+        if (!has_ext) {
+            out_path = out_path.string() + ext;
+        } else if (!ends_with_chosen) {
+            out_path.replace_extension(ext);
         }
-
-        // If already .d.ts, keep as-is
         output_path = out_path.string();
     } else {
         fs::path p(input_file);
         std::string stem = p.stem().string();
-        p = p.parent_path() / (stem + ".d.ts");
+        p = p.parent_path() / (stem + ext);
         output_path = p.string();
     }
 
