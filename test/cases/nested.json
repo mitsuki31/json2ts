@@ -1,0 +1,9 @@
+{
+  "user": {
+    "id": 1,
+    "profile": {
+      "name": "Charlie"
+    }
+  },
+  "tags": ["a", "b"]
+}

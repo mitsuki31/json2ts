@@ -1,0 +1,6 @@
+{
+  // Root comment
+  "name": "Bob",
+  /* Age info */
+  "age": 25
+}
