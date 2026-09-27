@@ -15,7 +15,13 @@ CMakeUserPresets.json
 build/
 
 json2ts
+!json2ts/
 json2ts.exe
 
 # Test outputs (.d.ts files)
-test/**/*.d.ts
+test/**/*.ts
+!test/runner.ts
+
+test/expect/
+test/expect_classes/
+test/node_modules/
