@@ -1,5 +1,4 @@
 #include <sstream>
-#include <unordered_set>
 
 #include <json2ts/types.h>
 #include <json2ts/generator.h>
@@ -15,8 +14,7 @@ constexpr std::string ts_type_for(const nlohmann::json& j) noexcept(true) {
     if (j.is_array())                                   return j.empty()
                                                             ? "any[]"
                                                             : ts_type_for(j[0]) + "[]";
-    // object handled separately
-    return "any";
+    return "any";  // object handled separately
 }
 
 void build_interfaces_recursive(const nlohmann::json& j,
@@ -72,7 +70,26 @@ void build_interfaces_recursive(const nlohmann::json& j,
                     oss << sub_name << "[];\n";
                     build_interfaces_recursive(first, sub_name, defs, comments_by_key);
                 } else {
-                    oss << ts_type_for(*it) << ";\n";
+                    // Collect the type of every element, keeping first-seen order
+                    // and dropping duplicates.
+                    std::vector<std::string> types;
+                    for (const auto& elem : *it) {
+                        std::string t = ts_type_for(elem);
+                        if (std::find(types.begin(), types.end(), t) == types.end()) {
+                            types.push_back(std::move(t));
+                        }
+                    }
+
+                    if (types.size() == 1) {
+                        oss << types[0] << "[];\n";
+                    } else {
+                        oss << "(";
+                        for (std::size_t i = 0; i < types.size(); ++i) {
+                            if (i != 0) oss << " | ";
+                            oss << types[i];
+                        }
+                        oss << ")[];\n";
+                    }
                 }
             }
         } else {
