@@ -1,0 +1,35 @@
+{
+  "extends": ["@tsconfig/recommended"],
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "module": "esnext",
+    "types": ["node"],
+
+    "sourceMap": false,
+    "declaration": false,
+    "declarationMap": false,
+
+    "strict": true,
+    "noImplicitReturns": true,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+
+  "include": [
+    "runner.ts",
+    "lib/*.ts",
+    "expect/**/*.ts",
+    "expect_classes/**/*.ts"
+  ],
+}

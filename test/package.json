@@ -1,0 +1,23 @@
+{
+  "name": "json2ts-test",
+  "version": "0.0.0",
+  "license": "Unlicensed",
+  "author": "Ryuu Mitsuki (https://github.com/mitsuki31)",
+  "type": "module",
+  "private": true,
+  "main": "runner.ts",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "check:watch": "tsc --noEmit --watch",
+    "test": "tsx runner.ts"
+  },
+  "devDependencies": {
+    "@tsconfig/recommended": "^1.0.13",
+    "@types/node": "^26.6.2",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3"
+  },
+  "allowScripts": {
+    "esbuild": true
+  }
+}
