@@ -17,10 +17,10 @@ constexpr std::string ts_type_for(const nlohmann::json& j) noexcept(true) {
     return "any";  // object handled separately
 }
 
-void build_interfaces_recursive(const nlohmann::json& j,
-                                const std::string& name,
-                                std::vector<InterfaceDef>& defs,
-                                const UnorderedCommentsMap& comments_by_key) {
+const size_t build_interfaces_recursive(const nlohmann::json& j,
+                                        const std::string& name,
+                                        std::vector<InterfaceDef>& defs,
+                                        const UnorderedCommentsMap& comments_by_key) {
     std::ostringstream oss;
     // Interface-level comment
     auto iface_comment_it = comments_by_key.find(name);
@@ -98,7 +98,9 @@ void build_interfaces_recursive(const nlohmann::json& j,
     }
 
     oss << "}\n";
+
     defs.push_back({name, oss.str()});
+    return defs.size() - 1;
 }
 
 } // namespace json2ts::generator

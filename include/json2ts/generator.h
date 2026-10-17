@@ -3,8 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
-#include <ostream>
 #include <nlohmann/json.hpp>
 
 #include <json2ts/types.h>
@@ -13,10 +11,10 @@ namespace json2ts::generator {
 
 constexpr std::string ts_type_for(const nlohmann::json& j) noexcept(true);
 
-void build_interfaces_recursive(const nlohmann::json& j,
-                                const std::string& name,
-                                std::vector<InterfaceDef>& defs,
-                                const UnorderedCommentsMap& comments_by_key);
+const size_t build_interfaces_recursive(const nlohmann::json& j,
+                                        const std::string& name,
+                                        std::vector<InterfaceDef>& defs,
+                                        const UnorderedCommentsMap& comments_by_key);
 
 } // namespace json2ts::generator
 
