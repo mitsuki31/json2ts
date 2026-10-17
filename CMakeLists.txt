@@ -11,14 +11,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(json2ts
-    src/main.cpp
-
-    src/cli.cpp
-    src/generator.cpp
-    src/parser.cpp
-    src/utils.cpp
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
+
+add_executable(json2ts ${SOURCES})
 
 target_include_directories(json2ts PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
