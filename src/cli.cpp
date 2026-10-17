@@ -25,6 +25,7 @@ int cli::parse_args(int argc, char** argv, std::string& input_file,
             output_file = argv[++i];
         } else if (arg == "--name" && has_remain) {
             interface_name = argv[++i];
+            has_custom_name = true;
         } else if (arg == "--no-comments") {
             no_comments = true;
         } else if (arg == "--dts") {
