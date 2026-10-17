@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & test (release)
+    uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
+
+  publish:
+    name: Publish binaries
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: json2ts-*
+          path: dist
+
+      - name: Attach binaries to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          TAG="${TAG#v}"
+          mkdir -p assets
+
+          for dir in dist/*/; do
+            artifact="$(basename "${dir%/}")"     # e.g. json2ts-linux-x86_64
+            suffix="${artifact#json2ts-}"         # e.g. linux-x86_64
+
+            files=("$dir"*)
+            if (( ${#files[@]} == 0 )); then
+              echo "::error::No files in artifact directory $dir"; exit 1
+            fi
+            if (( ${#files[@]} > 1 )); then
+              echo "::warning::Multiple files in $dir; using ${files[0]}"
+            fi
+            source_file="${files[0]}"
+
+            ext=""
+            if [[ "$source_file" == *.exe ]]; then
+              ext=".exe"
+            fi
+
+            cp "$source_file" "assets/json2ts-${TAG}-${suffix}${ext}"
+          done
+
+          assets_list=(assets/*)
+          if (( ${#assets_list[@]} == 0 )); then
+            echo "::error::No assets to upload"; exit 1
+          fi
+
+          gh release upload "$TAG" "${assets_list[@]}" --repo "$GITHUB_REPOSITORY" --clobber
