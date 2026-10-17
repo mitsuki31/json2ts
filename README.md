@@ -1,5 +1,15 @@
 # json2ts
 
+[![Build & Test](https://github.com/mitsuki31/json2ts/actions/workflows/build.yml/badge.svg)](https://github.com/mitsuki31/json2ts/actions/workflows/build.yml)
+[![Release](https://github.com/mitsuki31/json2ts/actions/workflows/release.yml/badge.svg)](https://github.com/mitsuki31/json2ts/actions/workflows/release.yml)
+[![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue)](./LICENSE)
+<br/>
+![C++ standard: 20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=cplusplus&logoColor=white)
+![CMake 3.14+](https://img.shields.io/badge/CMake-3.14%2B-064F8C?logo=cmake&logoColor=white)
+![Node.js 22+ (test suite only)](https://img.shields.io/badge/Node.js-22%2B-5FA04E?logo=nodedotjs&logoColor=white)
+
+![Supported platforms: Linux, macOS, Windows](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-orange?style=for-the-badge&logo=linux&logoColor=white)
+
 Convert a JSON file into a TypeScript `.d.ts` or `.ts` file as an interface object.
 
 `json2ts` reads a JSON document and generates TypeScript interfaces from it:
