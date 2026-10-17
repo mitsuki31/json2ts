@@ -17,6 +17,13 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
 
 add_executable(json2ts ${SOURCES})
 
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/json2ts/version.in.h"
+    "${CMAKE_CURRENT_BINARY_DIR}/include/json2ts/version.h"
+    @ONLY
+)
+
 target_include_directories(json2ts PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    "${CMAKE_CURRENT_BINARY_DIR}/include"   # generated header
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"   # hand-written headers
 )

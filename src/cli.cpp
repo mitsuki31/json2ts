@@ -11,6 +11,7 @@
 #include <json2ts/parser.h>
 #include <json2ts/generator.h>
 #include <json2ts/utils.h>
+#include <json2ts/version.h>
 
 namespace json2ts {
 
@@ -32,6 +33,10 @@ int cli::parse_args(int argc, char** argv, std::string& input_file,
             use_dts = true;
         } else if (arg == "--ts") {
             use_ts = true;
+        } else if (arg == "--version") {
+            std::cout << json2ts::version::kProjectName << " v"
+                      << json2ts::version::kVersion << std::endl;
+            exit(EXIT_SUCCESS);  // Force exit, do not use `return 0`
         } else if (arg == "--help") {
             std::cout << "json2ts - Convert JSON to TypeScript .d.ts / .ts interface file\n"
                       << "\n"
@@ -44,6 +49,7 @@ int cli::parse_args(int argc, char** argv, std::string& input_file,
                       << "  --dts            Output file with '.d.ts' extension (default)\n"
                       << "  --ts             Output file with '.ts' extension\n"
                       << "  --no-comments    Exclude JSON comments from output (still stripped for parsing)\n"
+                      << "  --version        Show the version\n"
                       << "  --help           Show this help message"
                       << std::endl;
             exit(EXIT_SUCCESS);  // Force exit, do not use `return 0`
