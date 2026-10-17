@@ -1,9 +1,11 @@
+// SPDX-FileCopyrightText: 2026 Ryuu Mitsuki <dhefam31@proton.me>
+// SPDX-License-Identifier: GPL-3.0-only
+
 #ifndef JSON2TS_PARSER_H
 #define JSON2TS_PARSER_H
 
 #include <string>
 #include <vector>
-#include <unordered_map>
 
 #include <json2ts/types.h>
 

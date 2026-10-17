@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Ryuu Mitsuki <dhefam31@proton.me>
+// SPDX-License-Identifier: GPL-3.0-only
+
 #include <cctype>
 
 #include <json2ts/utils.h>
