@@ -1,0 +1,71 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & test (${{ matrix.suffix }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            suffix: linux-x86_64
+            bin: build/json2ts
+          - os: macos-latest
+            suffix: macos-arm64
+            bin: build/json2ts
+          - os: windows-latest
+            suffix: windows-x86_64
+            bin: build/Release/json2ts.exe
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: test/package-lock.json
+
+      - name: Configure CMake (Release)
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Install test dependencies
+        working-directory: test
+        run: npm ci
+
+      - name: Generate expected TypeScript
+        shell: bash
+        env:
+          BIN: ${{ matrix.bin }}
+        run: test/build_test.sh --bin "$BIN" test/cases/*.json
+
+      - name: Run test suite
+        working-directory: test
+        run: npm test
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: json2ts-${{ matrix.suffix }}
+          path: ${{ matrix.bin }}
+          if-no-files-found: error
