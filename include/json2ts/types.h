@@ -1,7 +1,7 @@
 #ifndef JSON2TS_TYPES_H
 #define JSON2TS_TYPES_H
 
-#include <iostream>      // std::string
+#include <string>        // std::string
 #include <unordered_map> // std::unordered_map
 #include <vector>        // std::vector
 
