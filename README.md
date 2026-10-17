@@ -69,7 +69,7 @@ json2ts <input.json>
     [--name <Name>]
     [--no-comments]
     [--dts | --ts]
-    [--help]
+    [--version | --help]
 ```
 
 | Option | Description |
@@ -80,13 +80,14 @@ json2ts <input.json>
 | `--output <file>` | Output file (extension enforced/replaced) |
 | `--name <Name>` | Interface name (default: single root key, or filename stem, or `Root`) |
 | `--no-comments` | Exclude JSON comments from generated output |
+| `--version` | Show the version |
 | `--help` | Show help message |
 
 On success, the tool prints the generated path as `Generated: <path>`.
 
 ### Output file
 
-- Without `--output`, the generated file is written next to the input file using the same stem and the chosen extension: `data.json` → `data.d.ts`.
+- Without `--output`, the generated file is written next to the input file using the same stem and the chosen extension: `data.json` → `data.d.ts` or `data.ts` if `--ts` is specified.
 - With `--output`, the chosen extension is enforced: it is appended when the filename has no extension, and replaced when the filename has a different one.
 
 ### Interface name

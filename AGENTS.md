@@ -36,6 +36,7 @@ The "test/" directory contains JSON fixtures covering the supported input shapes
 │   │   ├── generator.h  # TypeScript generation functions
 │   │   ├── parser.h     # Comment preprocessing functions
 │   │   ├── types.h      # Shared structs and aliases
+│   │   ├── version.h    # Input template file for versioning, used by CMake
 │   │   └── utils.h      # String/identifier helpers
 │   └── nlohmann/
 │       └── json.hpp     # Vendored nlohmann/json dependency
