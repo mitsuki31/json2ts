@@ -18,8 +18,9 @@ json2ts
 !json2ts/
 json2ts.exe
 
-# Test outputs (.d.ts files)
+# Test outputs
 test/**/*.ts
+!test/lib/*.ts
 !test/runner.ts
 
 test/expect/
