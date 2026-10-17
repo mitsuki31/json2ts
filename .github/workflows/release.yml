@@ -36,7 +36,6 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
 
-          TAG="${TAG#v}"
           mkdir -p assets
 
           for dir in dist/*/; do
@@ -57,7 +56,7 @@ jobs:
               ext=".exe"
             fi
 
-            cp "$source_file" "assets/json2ts-${TAG}-${suffix}${ext}"
+            cp "$source_file" "assets/json2ts-${TAG#v}-${suffix}${ext}"
           done
 
           assets_list=(assets/*)
