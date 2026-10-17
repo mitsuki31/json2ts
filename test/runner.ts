@@ -3,6 +3,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { readJSONFile } from './lib/json';
 import { buildExpectedClassModule } from './lib/modulegen';
@@ -39,7 +40,8 @@ async function main(): Promise<void> {
       );
       const firstClass = classes[classes.length - 1];
 
-      const expectedModule: GeneratedModule = await import(expectedClassFile);
+      const expectedModule: GeneratedModule =
+        await import(pathToFileURL(expectedClassFile).href);
       const rootClass = expectedModule.root;
 
       if (
