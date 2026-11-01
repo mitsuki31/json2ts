@@ -34,26 +34,21 @@ async function main(): Promise<void> {
     try {
       const jsonValue = await readJSONFile(testFile);
 
-      const classes = await buildExpectedClassModule(
+      await buildExpectedClassModule(
         expectedFile,
         expectedClassFile,
       );
-      const firstClass = classes[classes.length - 1];
 
       const expectedModule: GeneratedModule =
         await import(pathToFileURL(expectedClassFile).href);
-      const rootClass = expectedModule.root;
 
-      if (
-        typeof expectedModule.root !== 'function'
-          || !('schema' in rootClass)
-      ) {
+      if (!Object.hasOwn(expectedModule, 'root')) {
         throw new TypeError(
           `No runtime schema found in ${expectedClassFile}`,
         );
       }
 
-      validateJSON(jsonValue, rootClass, firstClass);
+      validateJSON(jsonValue, expectedModule.root);
       console.log(`\x1b[1;32m✓\x1b[0m ${filename}`);
     } catch (error) {
       console.error(`\x1b[1;31m✗\x1b[0m ${filename}`);
