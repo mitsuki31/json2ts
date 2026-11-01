@@ -70,10 +70,10 @@ Data flow for a single run:
 
 1. `json2ts::cli::run` (in `src/cli.cpp`) parses `argv` via `parse_args`, then calls `process_file`.
 2. `json2ts::parser::preprocess_json` strips `//` and `/* */` comments and records them as `ExtractedComment` (text plus optional key).
-3. `nlohmann::json::parse` parses the cleaned text; `process_file` rejects any root that is not an object.
+3. `nlohmann::json::parse` parses the cleaned text; `process_file` rejects any root that is neither an object nor an array. Arrays use the root-array builder.
 4. `json2ts::parser::build_comments_by_key` builds the `UnorderedCommentsMap` used later for JSDoc lookup.
-5. The interface name is resolved (`--name` as-is, else single root key, else filename stem) and sanitized.
-6. `json2ts::generator::build_interfaces_recursive` renders definitions depth-first into `std::vector<InterfaceDef>`, appending each parent after its nested definitions. It returns the index of the definition it appended.
+5. The interface name is resolved (`--name` as-is, else single root key for objects, else filename stem) and sanitized.
+6. `json2ts::generator::build_interfaces_recursive` renders object definitions depth-first into `std::vector<InterfaceDef>`, appending each parent after its nested definitions. It returns the index of the definition it appended. `build_root_array` renders a top-level array as a root type alias, plus an `<Name>Item` interface when the first element is an object.
 7. `process_file` resolves the output path, writes definitions de-duplicated by name, and prints `Generated: <path>`.
 
 Shared types live in `include/json2ts/types.h` (`ExtractedComment`, `InterfaceDef`, `UnorderedCommentsMap`).
@@ -170,6 +170,8 @@ Verified semantics to preserve:
 - `null` maps to TypeScript `null`, not `any`.
 - Arrays of primitives use `<type>[]`; mixed primitive arrays produce a union in first-seen element order, e.g. `(number | boolean | null | string)[]`.
 - Arrays of objects generate the interface from the first element only; remaining elements are assumed to share the shape.
+- A top-level array generates `export type <Name> = ...;` and `export type { <Name> as default };`. When the first element is an object, its interface is named `<Name>Item`; nested definitions use the existing parent-plus-property naming rule.
+- Top-level arrays follow the same element inference rules as array properties.
 - Empty arrays generate `any[]`. This is the only accepted use of `any`; DO NOT introduce other implicit `any` output.
 - Identifiers are sanitized by `json2ts::utils::sanitize_identifier` (invalid characters become `_`, a leading digit is prefixed with `_`).
 
@@ -195,7 +197,7 @@ Current option behavior (keep `README.md` in sync):
 
 - `--dts` is the default extension; `--ts` selects `.ts` and takes precedence when both are given. There is no mutual-exclusion validation.
 - `--output` enforces the chosen extension: appended when the filename has none, replaced when it differs.
-- `--name` is used as-is after `sanitize_identifier`; derived names (single root key or filename stem) are PascalCased; empty results fall back to `Root`.
+- `--name` is used as-is after `sanitize_identifier`; derived names (single root key for objects, or filename stem) are PascalCased; empty results fall back to `Root`. Top-level arrays always use the filename stem unless `--name` is given.
 - The `--name` branch must set `has_custom_name`, which drives the `is_interface_name_from_cli` branch in `process_file`. Dropping this assignment silently PascalCases CLI names (regression fixed in `0201807`).
 - Options given without a value fall through to the `Unknown option` error path. If touched, improve the message instead of replicating the quirk.
 - `use_dts` is currently parsed but unused; only `use_ts` is consulted when choosing the extension.
@@ -241,6 +243,7 @@ Additional format rules:
 
 - One `export interface` per object; nested interfaces are emitted before their parent, root last.
 - Nested interface names are the parent name plus the PascalCased property name (e.g. `MyTeams` + `teams` → `MyTeamsTeams`).
+- A top-level array emits its element interface (if any), then `export type <Name> = ...;`, then `export type { <Name> as default };`.
 - Properties are sorted alphabetically (see JSON Semantics).
 - The file ends with a trailing newline.
 
@@ -261,7 +264,7 @@ make test             # tsx test/runner.ts validates JSON inputs against schemas
 `make test` errors when `make configure-test` or `make build-test` has not run first.
 
 - `test/build_test.sh` runs the built binary for every fixture with `--ts`.
-- `test/runner.ts` (with `test/lib/`) converts each generated `.ts` into a class with a runtime schema and validates the original JSON against it.
+- `test/runner.ts` (with `test/lib/`) converts each generated `.ts` into a class with a runtime schema (or a root alias schema) and validates the original JSON against it.
 - `test/expect/` and `test/expect_classes/` are generated and gitignored. DO NOT commit them.
 
 When changing conversion behavior:

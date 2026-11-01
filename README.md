@@ -32,13 +32,12 @@ The generated output is deterministic: the same input always produces the same o
 
 This project follows the standard [**RFC 4627 (2006)**](https://www.rfc-editor.org/info/rfc4627/), which only allows the top level to be either an object or an array.
 
-> [!NOTE]
-> Currently the top level array is not supported yet.
+A top-level array is generated as a root type alias, plus an `<Name>Item` interface when its elements are objects. The alias is exported both by name and as a type-only default export.
 
 | Type | Supported | Example |
 | ---- | :-------: | ------- |
 | object | ✅ | `{ ... }` |
-| array | ❌ | `[ ... ]` |
+| array | ✅ | `[ ... ]` |
 | string | ❌ | `"This is foo"` |
 | number | ❌ | `404` |
 | boolean | ❌ | `true` / `false` |
@@ -93,7 +92,7 @@ On success, the tool prints the generated path as `Generated: <path>`.
 ### Interface name
 
 - `--name` is used as-is after replacing characters that are not valid in a TypeScript identifier with `_`: `--name my-teams` → `my_teams`.
-- Without `--name`, the name comes from the single root key when the root object has exactly one key, otherwise from the input filename stem. Derived names are converted to PascalCase: `single_key_root.json` → `SingleKeyRoot`.
+- Without `--name`, the name comes from the single root key when the root object has exactly one key, otherwise from the input filename stem. Top-level arrays have no root key, so they always use the filename stem. Derived names are converted to PascalCase: `single_key_root.json` → `SingleKeyRoot`.
 - Names that would end up empty (or only `_`) fall back to `Root`.
 
 ## Example
@@ -136,14 +135,41 @@ export interface MyTeams {
 
 Note that properties are emitted alphabetically and nested interfaces are written before the interface that references them. See [Supported Input](#supported-input) for details.
 
+### Top-level array
+
+For an array at the root, `json2ts` generates a root type alias. Object elements also get a `<Name>Item` interface, and the alias is exported by name and as a type-only default:
+
+```json
+[
+  { "id": 1, "name": "Tiger Team" },
+  { "id": 2, "name": "Pineapple Team" }
+]
+```
+
+```bash
+json2ts teams.json --ts --name Teams
+```
+
+**Output:**
+
+```ts
+export interface TeamsItem {
+  id: number;
+  name: string;
+}
+export type Teams = TeamsItem[];
+export type { Teams as default };
+```
+
 ## Supported Input
 
-- JSON root must be an object (`{"key": ...}`). Arrays or primitives at root will fail.
+- JSON root must be an object (`{"key": ...}`) or an array (`[...]`). Primitive roots will fail.
 - Supported JSON types: `object`, `array`, `string`, `number`, `boolean`, `null`.
 - Nested objects and arrays preserve their structure in the generated TypeScript representation.
 - Object keys are ordered alphabetically in the output. The ordering is deterministic, but it does not preserve the key order of the input file.
 - Arrays of primitives use `<type>[]`. Arrays with mixed element types generate a union: `(number | boolean | null | string)[]`.
 - Arrays of objects generate a nested interface from the first element; later elements are assumed to have the same shape.
+- A top-level array generates a root type alias. If the first element is an object, the element interface is named `<Name>Item`; its nested definitions use the existing parent-plus-property naming rule.
 - Empty arrays have no element type to infer and are generated as `any[]`. This is the only case where `any` is used.
 - Properties whose names are not valid TypeScript identifiers are sanitized: invalid characters are replaced with `_`, and a leading digit is prefixed with `_`.
 
@@ -164,13 +190,14 @@ Generated output is deterministic: given the same JSON input, the output is iden
 - Every object becomes an `export interface <Name> { ... }` definition.
 - Nested interface names are built from the parent name plus the PascalCased property name: `MyTeams` + `teams` → `MyTeamsTeams`.
 - Nested interfaces are emitted before their parent interface, so the root interface is written last.
+- A top-level array emits an `export type <Name> = ...;` alias followed by `export type { <Name> as default };`. Object elements also emit an `<Name>Item` interface before the alias.
 - Properties are sorted alphabetically and the file ends with a trailing newline.
 
 ## Error Behavior
 
 - Missing input file: `Failed to open input file: <file>` and non-zero exit.
 - Invalid JSON: parsing error message and non-zero exit.
-- Root not an object: error message and non-zero exit.
+- Root not an object or array: `Root JSON value must be an object or array to generate TypeScript.` and non-zero exit.
 - Unknown options, or an option given without its value, are rejected with an error message and non-zero exit.
 - Output file that cannot be opened: error message and non-zero exit.
 - `--dts` and `--ts` are not mutually exclusive: `.d.ts` is the default, and `--ts` takes precedence when both are given.
@@ -205,9 +232,9 @@ build/     # CMake build output (gitignored)
 1. `src/main.cpp` hands `argv` to `json2ts::cli::run`.
 2. `src/cli.cpp` parses the options and coordinates the conversion.
 3. `src/parser.cpp` strips comments from the raw JSON, extracts them, and links them to keys.
-4. `nlohmann::json` parses the cleaned document; the root must be an object.
-5. `src/generator.cpp` walks the value recursively and renders interfaces, nested ones first.
-6. `src/cli.cpp` resolves the output path, de-duplicates interfaces by name, writes the file, and prints the generated path.
+4. `nlohmann::json` parses the cleaned document; the root must be an object or an array.
+5. `src/generator.cpp` walks the value recursively and renders interfaces, nested ones first. A top-level array becomes a root type alias.
+6. `src/cli.cpp` resolves the output path, de-duplicates definitions by name, writes the file, and prints the generated path.
 
 ### Adding a test case
 

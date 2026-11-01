@@ -6,6 +6,8 @@ import { JSON_PRIMITIVE_TYPES } from './validate';
 
 const INTERFACE_RE = /export\s+interface\s+([A-Za-z_$][\w$]*)\s*\{([\s\S]*?)\}/g;
 const FIELD_RE = /^\s*([A-Za-z_$][\w$]*)\s*:\s*([^;]+);/gm;
+const TYPE_ALIAS_RE =
+  /^export\s+type\s+([A-Za-z_$][\w$]*)\s*=\s*([^;]+);/m;
 
 
 function parseInterfaces(source: string): InterfaceDefinition[] {
@@ -25,6 +27,19 @@ function parseInterfaces(source: string): InterfaceDefinition[] {
   }
 
   return interfaces;
+}
+
+interface TypeAliasDefinition {
+  readonly name: string;
+  readonly type: string;
+}
+
+function parseTypeAlias(source: string): TypeAliasDefinition | undefined {
+  const match = source.match(TYPE_ALIAS_RE);
+  if (!match) return undefined;
+
+  const [, name, type] = match;
+  return { name, type: type.trim() };
 }
 
 function schemaValue(type: string): string {
@@ -55,9 +70,19 @@ function schemaValue(type: string): string {
 
 function generateClassModule(source: string): readonly [string, readonly string[]] {
   const interfaces = parseInterfaces(source);
+  const alias = parseTypeAlias(source);
   const output: string[] = [];
 
-  const firstClass: string = interfaces[interfaces.length - 1].name;
+  const lastInterface = interfaces.length > 0
+    ? interfaces[interfaces.length - 1].name
+    : undefined;
+  const rootExpression = alias
+    ? schemaValue(alias.type)
+    : lastInterface;
+
+  if (rootExpression === undefined) {
+    throw new TypeError('No interface or type alias found in generated source');
+  }
 
   for (const definition of interfaces) {
     output.push(`export class ${definition.name} {`);
@@ -77,12 +102,11 @@ function generateClassModule(source: string): readonly [string, readonly string[
 
     output.push('  } as const;');
     output.push('}');
-    if (firstClass === definition.name) {
-      // Expose the first class as `root` constant
-      output.push(`export const root = ${firstClass};`);
-    }
     output.push('');
   }
+
+  output.push(`export const root = ${rootExpression};`);
+  output.push('');
 
   return [output.join('\n'), interfaces.map(x => x.name)];
 }

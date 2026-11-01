@@ -19,6 +19,11 @@ const size_t build_interfaces_recursive(const nlohmann::json& j,
                                         std::vector<InterfaceDef>& defs,
                                         const UnorderedCommentsMap& comments_by_key);
 
+void build_root_array(const nlohmann::json& root,
+                      const std::string& name,
+                      std::vector<InterfaceDef>& defs,
+                      const UnorderedCommentsMap& comments_by_key);
+
 } // namespace json2ts::generator
 
 #endif // JSON2TS_GENERATOR_H

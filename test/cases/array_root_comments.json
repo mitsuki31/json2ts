@@ -1,0 +1,12 @@
+[
+  {
+    /* Unique identifier */
+    "id": 1,
+    /* Human-readable label */
+    "name": "alpha"
+  },
+  {
+    "id": 2,
+    "name": "beta"
+  }
+]

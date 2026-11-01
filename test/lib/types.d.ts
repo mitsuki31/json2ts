@@ -45,7 +45,7 @@ type JSONUnsupportedValueName = Exclude<PrimitiveName, JSONValueName> | "functio
 type RuntimeType = JSONPrimitiveValueName | "any";
 type RuntimeSchema =
   | RuntimeType
-  | readonly [RuntimeSchema]
+  | readonly RuntimeSchema[]
   | RuntimeClass
 ;
 
@@ -64,7 +64,7 @@ interface InterfaceDefinition {
 }
 
 interface GeneratedModule {
-  readonly root: RuntimeClass;
+  readonly root: RuntimeSchema;
   readonly [field: PropertyKey]: any;
 }
 

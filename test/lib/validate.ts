@@ -55,7 +55,7 @@ function assertType(
   // Just a helper function for better typing
   const isArraySchema = (
     val: typeof schema,
-  ): val is readonly [RuntimeSchema] => Array.isArray(val);
+  ): val is readonly RuntimeSchema[] => Array.isArray(val);
 
   if (isArraySchema(schema)) {
     if (!Array.isArray(value)) {
@@ -64,19 +64,25 @@ function assertType(
       );
     }
 
-    let currentIndex = 0;
-    for (let i = 0; i < schema.length; i++) {
-      const elementSchema = schema[i];
-      const currentJsonValue = value[i];
-      assertType(currentJsonValue, elementSchema, `${path}[${i}]`);
+    for (let i = 0; i < value.length; i++) {
+      let matched = false;
+      let lastError: unknown;
 
-      currentIndex = i;
-    }
+      for (const elementSchema of schema) {
+        try {
+          assertType(value[i], elementSchema, `${path}[${i}]`);
+          matched = true;
+          break;
+        } catch (error) {
+          lastError = error;
+        }
+      }
 
-    if (value.length > schema.length) {
-      const elementSchema = schema[currentIndex];
-      for (let i = currentIndex; i < value.length; i++) {
-        assertType(value[i], elementSchema, `${path}[${i}]`);
+      if (!matched) {
+        if (lastError instanceof Error) throw lastError;
+        throw new TypeError(
+          `${path}[${i}]: JSON value does not match any allowed element type`,
+        );
       }
     }
 
@@ -93,7 +99,11 @@ function assertType(
     );
   }
 
-  for (const [field, fieldSchema] of Object.entries(schema.schema)) {
+  // String and array schemas returned earlier, so only an object schema
+  // remains here.
+  const classSchema = schema as RuntimeClass;
+
+  for (const [field, fieldSchema] of Object.entries(classSchema.schema)) {
     if (!(field in value)) {
       throw new TypeError(
         `${path}.${field}: property is defined by the generated type but is missing from the JSON value`,
@@ -110,8 +120,8 @@ function assertType(
 
 export function validateJSON(
   value: unknown,
-  rootClass: RuntimeClass,
+  rootSchema: RuntimeSchema,
   path?: string,
 ): void {
-  assertType(value, rootClass, path ?? '$');
+  assertType(value, rootSchema, path ?? '$');
 }
