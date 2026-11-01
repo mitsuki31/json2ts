@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "alpha",
+    "meta": {
+      "active": true
+    }
+  },
+  {
+    "id": 2,
+    "name": "beta",
+    "meta": {
+      "active": false
+    }
+  }
+]
