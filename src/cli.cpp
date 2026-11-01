@@ -45,7 +45,7 @@ int cli::parse_args(int argc, char** argv, std::string& input_file,
                       << "\n"
                       << "Options:\n"
                       << "  --output <file>  Output filename (extension enforced)\n"
-                      << "  --name <Name>    Interface name (default: filename stem or single root key)\n"
+                      << "  --name <Name>    Exported type/interface name (default: filename stem or single root key)\n"
                       << "  --dts            Output file with '.d.ts' extension (default)\n"
                       << "  --ts             Output file with '.ts' extension\n"
                       << "  --no-comments    Exclude JSON comments from output (still stripped for parsing)\n"
@@ -103,8 +103,8 @@ int cli::process_file(const std::string& input_file,
         return 1;
     }
 
-    if (!data.is_object()) {
-        std::cerr << "Root JSON value must be an object to generate an interface." << std::endl;
+    if (!data.is_object() && !data.is_array()) {
+        std::cerr << "Root JSON value must be an object or array to generate TypeScript." << std::endl;
         return 1;
     }
 
@@ -113,7 +113,7 @@ int cli::process_file(const std::string& input_file,
 
     // Determine interface name if not provided
     if (interface_name.empty()) {
-        if (data.size() == 1) {
+        if (data.is_object() && data.size() == 1) {
             interface_name = std::string(data.begin().key());
         }
         if (interface_name.empty()) {
@@ -133,7 +133,11 @@ int cli::process_file(const std::string& input_file,
 
     // Build interfaces
     std::vector<InterfaceDef> defs;
-    generator::build_interfaces_recursive(data, interface_name, defs, comments_by_key);
+    if (data.is_object()) {
+        generator::build_interfaces_recursive(data, interface_name, defs, comments_by_key);
+    } else {
+        generator::build_root_array(data, interface_name, defs, comments_by_key);
+    }
 
     // Output
     std::string output_path;

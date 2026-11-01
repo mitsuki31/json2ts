@@ -24,17 +24,17 @@ struct ExtractedComment {
 };
 
 /**
- * @brief A generated TypeScript interface.
+ * @brief A generated TypeScript definition.
  *
- * Holds the interface name and its fully-rendered body, ready to be
+ * Holds the definition name and its fully-rendered body, ready to be
  * written to an output file without further formatting.
  */
 struct InterfaceDef {
-    /// The interface identifier, e.g. "User" or "ApiResponse".
+    /// The definition identifier, e.g. "User" or "ApiResponse".
     std::string name;
 
-    /// The complete rendered interface, including `interface Name { ... }`
-    /// and any leading doc comments.
+    /// The complete rendered definition, including `interface Name { ... }`
+    /// or `type Name = ...;`, and any leading doc comments.
     std::string content;
 };
 
