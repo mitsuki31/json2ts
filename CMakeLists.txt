@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(json2ts
-    VERSION 0.1.0
+    VERSION 0.2.0
     LANGUAGES CXX
     HOMEPAGE_URL https://github.com/mitsuki31/json2ts
 )
